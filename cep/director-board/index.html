@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Director Board</title>
+  <style>
+    :root {
+      --bg: #1f1f1f;
+      --panel: #2a2a2a;
+      --muted: #b9b9b9;
+      --text: #f2f2f2;
+      --accent: #7f9cff;
+      --line: #3a3a3a;
+      --ok: #66d18f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, sans-serif;
+      height: 100vh;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      overflow: hidden;
+    }
+    .sidebar {
+      border-right: 1px solid var(--line);
+      background: var(--panel);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 12px;
+      overflow: auto;
+    }
+    .block {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .title { font-size: 13px; color: var(--muted); }
+    textarea, input, select {
+      width: 100%;
+      background: #181818;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px;
+      outline: none;
+      font-size: 12px;
+    }
+    textarea { min-height: 72px; resize: vertical; }
+    .row { display: flex; gap: 8px; }
+    button {
+      background: #303030;
+      color: var(--text);
+      border: 1px solid #4a4a4a;
+      border-radius: 6px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    button.primary {
+      background: var(--accent);
+      border-color: #8ea9ff;
+      color: #101010;
+      font-weight: 700;
+    }
+    button.success {
+      background: var(--ok);
+      border-color: #7be0a2;
+      color: #111;
+      font-weight: 700;
+    }
+    .hint { font-size: 11px; color: var(--muted); line-height: 1.5; }
+    .workspace {
+      position: relative;
+      overflow: hidden;
+    }
+    #board {
+      position: absolute;
+      inset: 0;
+      background: #151515;
+    }
+    .results {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      max-height: 250px;
+      overflow: auto;
+    }
+    .asset {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      background: #222;
+    }
+    .asset img {
+      max-width: 100%;
+      border-radius: 6px;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .asset .meta { font-size: 11px; color: var(--muted); margin-bottom: 8px; word-break: break-all; }
+    .status {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      background: #1b1b1b;
+      font-size: 11px;
+      color: var(--muted);
+      min-height: 52px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="block">
+      <div class="title">AIGC Provider</div>
+      <div class="row">
+        <select id="imageProvider">
+          <option value="mj">Midjourney Proxy</option>
+          <option value="sd">Stable Diffusion</option>
+        </select>
+        <select id="audioProvider">
+          <option value="suno">Suno Proxy</option>
+        </select>
+      </div>
+      <div class="hint">API Key 和代理地址通过本地环境变量配置（后端读取）。</div>
+    </div>
+
+    <div class="block">
+      <div class="title">镜头描述</div>
+      <textarea id="shotPrompt" placeholder="例如：雨夜城市高架桥，远景推进，赛博朋克霓虹，电影级光影"></textarea>
+      <div class="row">
+        <button id="refinePrompt">Gemini 优化提示词</button>
+        <button class="primary" id="genImage">生成画面</button>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="title">音效/配乐描述</div>
+      <textarea id="audioPrompt" placeholder="例如：悲伤钢琴+低频氛围，30秒，电影预告片质感"></textarea>
+      <div class="row">
+        <input id="audioDuration" type="number" min="5" max="180" step="1" value="30" />
+        <button class="primary" id="genAudio">生成音频</button>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="title">快速抠图</div>
+      <input id="removeBgFile" type="file" accept="image/*" />
+      <button id="removeBg">执行抠图</button>
+      <div class="hint">基于本地 Python `rembg`。</div>
+    </div>
+
+    <div class="block">
+      <div class="title">生成结果</div>
+      <div id="results" class="results"></div>
+    </div>
+
+    <div class="status" id="status">Ready.</div>
+  </aside>
+
+  <main class="workspace">
+    <canvas id="board"></canvas>
+  </main>
+
+  <script src="./main.js"></script>
+</body>
+</html>
